@@ -53,22 +53,41 @@ class PluginManager(object):
         # 将设备信息插入到通道管理对象
         self.channel_manager.add_device(channel_name, device_id)
 
-    def send_cmd(self, device_id, cmd):
-        return self.channel_manager.send_cmd(device_id, cmd)
+    def send_cmd(self, device_id, device_cmd):
+        return self.channel_manager.send_cmd(device_id, device_cmd)
 
-    def send_data(self, device_id, data):
-        return self.mqtt_manager.send_data(device_id, data)
+    def send_data(self, device_id, device_data):
+        return self.mqtt_manager.send_data(device_id, device_data)
 
-    def process_data(self, device_id, msg):
-        return self.protocol_manager.process_data(device_id, msg)
+    def process_data(self, device_id, data_msg):
+        """
+        返回device_data
+        :param device_id:
+        :param data_msg:
+        :return:
+        """
+        return self.protocol_manager.process_data(device_id, data_msg)
 
-    def process_cmd(self, device_id, msg):
-        return self.protocol_manager.process_cmd(device_id, msg)
+    def process_cmd(self, device_id, device_cmd):
+        """
+        返回cmd_msg
+        :param device_id:
+        :param device_cmd:
+        :return:
+        """
+        return self.protocol_manager.process_cmd(device_id, device_cmd)
 
-    def process_data_by_protocol(self, channel, protocol, msg):
+    def process_data_by_protocol(self, channel, protocol, data_msg):
+        """
+        返回device_data
+        :param channel:
+        :param protocol:
+        :param data_msg:
+        :return:
+        """
         # 获取设备信息
         #
-        return self.protocol_manager.process_data_by_protocol(protocol, msg)
+        return self.protocol_manager.process_data_by_protocol(protocol, data_msg)
 
     def check_channel_status(self):
         return self.channel_manager.check_status()

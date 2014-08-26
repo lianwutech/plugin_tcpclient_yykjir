@@ -21,5 +21,5 @@ class UdpServerChannel(BaseChannel):
     def run(self):
         pass
 
-    def send_cmd(self, data):
+    def send_cmd(self, device_info, device_cmd):
         pass

@@ -25,5 +25,5 @@ class TcpClientChannel(BaseChannel):
     def isAlive(self):
         return True
 
-    def send_cmd(self, data):
+    def send_cmd(self, device_info, device_cmd):
         pass

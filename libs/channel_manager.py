@@ -19,6 +19,7 @@ class ChannelManager(object):
         self.mapper_dict = dict()
         self.channel_class_dict = dict()
         self.channel_dict = dict()
+        self.device_dict = dict()
         self.plugin_manager = plugin_manager
 
     def load(self, channel_params):
@@ -94,7 +95,7 @@ class ChannelManager(object):
             logger.info("device(%s) is exist." % device_id)
             return False
 
-    def process_data(self, network, channel, protocol, msg):
+    def process_data(self, network, channel, protocol, data_msg):
         """
         所有通道共用的数据处理通道
         :param channel:
@@ -102,7 +103,7 @@ class ChannelManager(object):
         :param msg:
         :return:
         """
-        device_info, devcice_data = self.plugin_manager.protocol_manager.process_data_by_protocol(protocol, msg)
+        device_info, device_data = self.plugin_manager.process_data_by_protocol(protocol, data_msg)
         # 判断设备是否存在，没有则新增设备
         device_id = "%s/%s/%s" % (network,
                                   device_info.get("device_addr", ""),
@@ -110,18 +111,19 @@ class ChannelManager(object):
         if device_id not in self.mapper_dict:
             self.plugin_manager.add_device(network, channel, protocol, device_info)
         # 发送数据
-        self.plugin_manager.send_data(device_id, devcice_data)
+        self.plugin_manager.send_data(device_id, device_data)
 
-    def send_cmd(self, device_id, cmd):
+    def send_cmd(self, device_id, device_cmd):
         if device_id in self.mapper_dict:
             channel_name = self.mapper_dict[device_id]
+            device_info = self.device_dict[device_id]
             if channel_name in self.channel_dict:
                 channel = self.channel_dict.get(channel_name, None)
                 if not channel.isAlive():
                     logger.error("channel(%s) is not alive, restart." % channel_name)
                     channel.run()
                 # 消息发送
-                return channel.send_cmd(cmd)
+                return channel.send_cmd(device_info, device_cmd)
             else:
                 logger.error("channel(%s) is not exist." % channel_name)
                 return False

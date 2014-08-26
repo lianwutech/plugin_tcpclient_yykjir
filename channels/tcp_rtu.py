@@ -8,9 +8,8 @@
 
 import logging
 
-from pymodbus.client.sync import ModbusSerialClient
+from pymodbus.client.sync import ModbusTcpClient
 
-import serial
 from libs.modbus_define import *
 from libs.base_channel import BaseChannel
 
@@ -18,30 +17,20 @@ from libs.base_channel import BaseChannel
 logger = logging.getLogger('yykj_serial')
 
 
-class SerialRtuChannel(BaseChannel):
+class TcpRtuChannel(BaseChannel):
     def __init__(self, network, name, protocol, params, manager):
         BaseChannel.__init__(network, name, protocol, params, manager)
+        self.server = params.get("server", "")
         self.port = params.get("port", "")
-        self.stopbits = params.get("stopbits", serial.STOPBITS_ON)
-        self.parity = params.get("parity", serial.PARITY_NONE)
-        self.bytesize = params.get("bytesize", serial.EIGHTBITS)
-        self.baudrate = params.get("baudrate", 9600)
-        self.timeout = params.get("timeout", 1)
         self.modbus_client = None
 
     def run(self):
-        self.modbus_client = ModbusSerialClient(method='rtu',
-                                                port=self.port,
-                                                baudrate=self.baudrate,
-                                                stopbits=self.stopbits,
-                                                parity=self.parity,
-                                                bytesize=self.bytesize,
-                                                timeout=self.timeout)
+        self.modbus_client = ModbusTcpClient(host=self.server, port=self.port)
         try:
             self.modbus_client.connect()
-            logger.debug("连接串口成功.")
+            logger.debug("连接服务器成功.")
         except Exception, e:
-            logger.error("连接串口失败，错误信息：%r." % e)
+            logger.error("连接服务器失败，错误信息：%r." % e)
 
     def isAlive(self):
         return True

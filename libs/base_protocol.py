@@ -7,9 +7,19 @@
 
 
 class BaseProtocol(object):
-    def process_data(self, msg):
-        return {}, {}
+    def process_data(self, data_msg):
+        """
+        返回device_data
+        :param data_msg:
+        :return:
+        """
+        return None, None
 
-    def process_cmd(self, msg):
-        return ""
+    def process_cmd(self, device_cmd):
+        """
+        返回cmd_msg
+        :param device_cmd:
+        :return:
+        """
+        return None
 
