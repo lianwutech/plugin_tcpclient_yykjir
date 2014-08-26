@@ -40,18 +40,18 @@ class PluginManager(object):
         # 增加设备信息
         pass
 
-    def add_device(self, network, channel, protocol, device_info):
-        device_info["channel"] = channel
+    def add_device(self, network_name, channel_name, protocol_name, device_info):
+        device_info["channel"] = channel_name
         if "protocol" not in device_info:
-            device_info["protocol"] = protocol
-        device_id = "%s/%s/%s" % (network,
+            device_info["protocol"] = protocol_name
+        device_id = "%s/%s/%s" % (network_name,
                                   device_info.get("device_addr", ""),
                                   device_info.get("device_port"))
         self.devices_dict[device_id] = device_info
         # 将设备信息插入到Mqtt管理对象
         self.mqtt_manager.add_device(device_id, device_info)
         # 将设备信息插入到通道管理对象
-        self.channel_manager.add_device(channel, device_id)
+        self.channel_manager.add_device(channel_name, device_id)
 
     def send_cmd(self, device_id, cmd):
         return self.channel_manager.send_cmd(device_id, cmd)

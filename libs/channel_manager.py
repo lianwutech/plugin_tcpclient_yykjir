@@ -6,18 +6,40 @@
 内部有一个device_id和内部对象id的映射表和基于内部对象id的内部对象字典
 支持的通道类型有Serial、HttpServer、TcpServer、UdpServer、HttpClient、TcpClient、UdpClient
 """
+
+import os
 import sys
 
-from channel import *
+from libs.base_channel import *
+from libs.utils import cur_file_dir, words_capitalize
 
 
 class ChannelManager(object):
     def __init__(self, plugin_manager):
         self.mapper_dict = dict()
+        self.channel_class_dict = dict()
         self.channel_dict = dict()
         self.plugin_manager = plugin_manager
 
     def load(self, channel_params):
+        # 扫描通道库
+        # 通过扫描目录来获取支持的协议库
+        cur_dir = cur_file_dir()
+        if cur_dir is not None:
+            channel_lib_path = cur_dir + "/channels"
+            file_list = os.listdir(channel_lib_path)
+            for file_name in file_list:
+                file_path = os.path.join(channel_lib_path, file_name)
+                if os.path.isfile(file_path) and ".py" in file_name:
+                    channel_name, ext = os.path.splitext(file_name)
+                    # 确保协议名称为小写
+                    channel_name = channel_name.lower()
+                    # 加载库
+                    module_name = "channels." + channel_name
+                    module = __import__(module_name)
+                    class_name = words_capitalize(channel_name) + "Channel"
+                    class_object = getattr(module, class_name)
+                    self.channel_class_dict[channel_name] = class_object
         # 加载参数
         for device_network in channel_params:
             network_name = device_network.get("network_name", "")
@@ -25,65 +47,36 @@ class ChannelManager(object):
             channels = device_network.get("channels", [])
             for channel in channels:
                 channel_name = channel.get("name", "")
-                channel_type = channel.get("channel_type", "")
+                channel_type = channel.get("type", "")
                 channel_params = channel.get("params", "{}")
                 preconfigured_devices = channel.get("preconfigured_devices", [])
 
-                if channel_type == const.SerialChannelType:
-                    self.channel_dict[channel_name] = SerialChannel(network_name,
-                                                                    channel_name,
-                                                                    protocol,
-                                                                    channel_params,
-                                                                    self)
-                elif channel_type == const.HttpServerChannelType:
-                    self.channel_dict[channel_name] = HttpServerChannel(network_name,
-                                                                        channel_name,
-                                                                        protocol,
-                                                                        channel_params,
-                                                                        self)
-                elif channel_type == const.TcpServerChannelType:
-                    self.channel_dict[channel_name] = TcpServerChannel(network_name,
-                                                                       channel_name,
-                                                                       protocol,
-                                                                       channel_params,
-                                                                       self)
-                elif channel_type == const.UdpServerChannelType:
-                    self.channel_dict[channel_name] = UdpServerChannel(network_name,
-                                                                       channel_name,
-                                                                       protocol,
-                                                                       channel_params,
-                                                                       self)
-                elif channel_type == const.HttpClientChannelType:
-                    self.channel_dict[channel_name] = HttpClientChannel(network_name,
-                                                                        channel_name,
-                                                                        protocol,
-                                                                        channel_params,
-                                                                        self)
-                elif channel_type == const.TcpClientChannelType:
-                    self.channel_dict[channel_name] = TcpClientChannel(network_name,
-                                                                       channel_name,
-                                                                       protocol,
-                                                                       channel_params,
-                                                                       self)
-                elif channel_type == const.UdpClientChannelType:
-                    self.channel_dict[channel_name] = UdpClientChannel(network_name,
-                                                                       channel_name,
-                                                                       protocol,
-                                                                       channel_params,
-                                                                       self)
+                # 创建通道对象
+                if channel_type in self.channel_class_dict:
+                    channel_class_object = self.channel_class_dict[channel_type]
+                    self.channel_dict[channel_name] = channel_class_object(network_name,
+                                                                           channel_name,
+                                                                           protocol,
+                                                                           channel_params,
+                                                                           self)
+                else:
+                    logger.error("channel type(%s) is not exist. Please check!")
+                    sys.exit(1)
 
-                # 线程启动
+                # 通道启动
                 try:
                     self.channel_dict[channel_name].run()
                 except Exception, e:
                     logger.error("channel(%s) run fail. error info: %r" % (channel_name, e))
 
+                # 通道与设备的映射管理建立
                 for device_info in preconfigured_devices:
                     device_id = "%s/%s/%s" % (network_name,
                                               device_info.get("device_addr", ""),
                                               device_info.get("device_port"))
                     self.mapper_dict[device_id] = channel_name
 
+        # 检查通道启动情况，如果有通道退出，则系统退出。
         for channel_name in self.channel_dict:
             if not self.channel_dict[channel_name].isAlive():
                 logger.fatal("channel(%s) is not run. please check。" % channel_name)

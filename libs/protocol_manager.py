@@ -10,7 +10,7 @@ import os
 import sys
 import logging
 
-from utils import cur_file_dir
+from utils import cur_file_dir, words_capitalize
 
 
 logger = logging.getLogger("")
@@ -26,7 +26,7 @@ class ProtocolManger(object):
         # 通过扫描目录来获取支持的协议库
         cur_dir = cur_file_dir()
         if cur_dir is not None:
-            protocol_lib_path = cur_dir + "/libs/protocols"
+            protocol_lib_path = cur_dir + "/protocols"
             file_list = os.listdir(protocol_lib_path)
             for file_name in file_list:
                 file_path = os.path.join(protocol_lib_path, file_name)
@@ -35,9 +35,9 @@ class ProtocolManger(object):
                     # 确保协议名称为小写
                     protocol_name = protocol_name.lower()
                     # 加载库
-                    module_name = "libs.protocol." + protocol_name
+                    module_name = "protocol." + protocol_name
                     module = __import__(module_name)
-                    class_name = protocol_name.capitalize() + "Protocol"
+                    class_name = words_capitalize(protocol_name) + "Protocol"
                     class_object = getattr(module, class_name)
                     self.protocol_dict[protocol_name] = class_object()
 

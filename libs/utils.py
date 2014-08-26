@@ -52,6 +52,20 @@ def get_ip_addr(ifname="eth0"):
         return socket.inet_ntoa(fcntl.ioctl(s.fileno(),
                                             0x8915,     # SIOCGIFADDR
                                             struct.pack('256s', ifname[:15])
-                                )[20:24])
+        )[20:24])
     else:
         return "127.0.0.1"
+
+
+def words_capitalize(words_str, split_char):
+    """
+    根据分割字符对字符串进行首字母大写并连接
+    :param str:
+    :param split_char:
+    :return:
+    """
+    result_str = ""
+    word_list = words_str.split(split_char)
+    for word in word_list:
+        result_str = result_str + word.capitalize()
+    return result_str
