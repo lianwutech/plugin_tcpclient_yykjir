@@ -21,7 +21,7 @@ class MqttClient(threading.Thread):
         self.network_name = network_name
         self.plugin_manager = plugin_manager
         self.protocol = network_params.get("protocol", "")
-        params = network_name.get("params", {})
+        params = network_params.get("params", {})
         self.server_ip = params.get("server", "127.0.0.1")
         self.server_port = params.get("port", 1883)
         self.gateway_topic = params.get("gateway_topic", "gateway")
@@ -29,7 +29,7 @@ class MqttClient(threading.Thread):
         self.device_dict = dict()
         channels = network_params.get("channels", [])
         for channel in channels:
-            channel_name = channel.get("channel_name", "")
+            channel_name = channel.get("name", "")
             preconfigured_devices = channel.get("preconfigured_devices", [])
             for device_info in preconfigured_devices:
                 device_id = "%s/%s/%s" % (self.network_name,

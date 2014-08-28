@@ -8,6 +8,7 @@
 import logging
 
 import serial
+
 from libs.base_channel import BaseChannel
 
 
@@ -15,8 +16,8 @@ logger = logging.getLogger('yykj_serial')
 
 
 class SerialChannel(BaseChannel):
-    def __init__(self, network, name, protocol, params, manager):
-        BaseChannel.__init__(network, name, protocol, params, manager)
+    def __init__(self, network, channel_name, channel_protocol, channel_params, manager):
+        BaseChannel.__init__(network, channel_name, channel_protocol, channel_params, manager)
         self.status = None
         self.port = params.get("port", "")
         self.stopbits = params.get("stopbits", serial.STOPBITS_ON)

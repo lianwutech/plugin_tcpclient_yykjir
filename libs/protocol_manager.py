@@ -7,10 +7,10 @@
 """
 
 import os
-import sys
 import logging
 
-from utils import cur_file_dir, words_capitalize
+from libs.base_protocol import BaseProtocol
+from utils import cur_file_dir, get_subclass
 
 
 logger = logging.getLogger("")
@@ -20,9 +20,10 @@ class ProtocolManger(object):
     def __init__(self, plugin_manager):
         self.mapper_dict = dict()
         self.protocol_dict = dict()
+        self.protocol_class_dict = dict()
         self.plugin_manager = plugin_manager
 
-    def load(self, protocol_params):
+    def load(self, plugin_params):
         # 通过扫描目录来获取支持的协议库
         cur_dir = cur_file_dir()
         if cur_dir is not None:
@@ -30,38 +31,57 @@ class ProtocolManger(object):
             file_list = os.listdir(protocol_lib_path)
             for file_name in file_list:
                 file_path = os.path.join(protocol_lib_path, file_name)
-                if os.path.isfile(file_path) and ".py" in file_name:
+                if os.path.isfile(file_path) and \
+                                ".py" in file_name and \
+                                "__" not in file_name and \
+                                ".pyc" not in file_name:
                     protocol_name, ext = os.path.splitext(file_name)
                     # 确保协议名称为小写
                     protocol_name = protocol_name.lower()
                     # 加载库
-                    module_name = "protocol." + protocol_name
-                    module = __import__(module_name)
-                    class_name = words_capitalize(protocol_name) + "Protocol"
-                    class_object = getattr(module, class_name)
-                    self.protocol_dict[protocol_name] = class_object()
+                    module_name = "protocols." + protocol_name
+                    try:
+                        module = __import__(module_name)
+                        # class_name = words_capitalize(protocol_name, "_") + "Protocol"
+                        # class_object = getattr(module, class_name)
+                        protocol_module = getattr(module, protocol_name)
+                        class_object = get_subclass(protocol_module, BaseProtocol)
+                        if class_object is not None:
+                            self.protocol_class_dict[protocol_name] = class_object
+                            self.protocol_dict[protocol_name] = class_object()
+                            logger.debug("Load protocol(%s) success." % module_name)
+                        else:
+                            logger.error("protocol(%s) has not protocol sub class." % module_name)
+                            return False
+                    except Exception, e:
+                        logger.error("Load protocol(%s) fail, error info:%r" % (module_name, e))
+                        return False
 
         # 根据配置生成具体对象
-        for device_network in protocol_params:
+        for device_network in plugin_params:
             network_name = device_network.get("network_name", "")
-            protocol_type = device_network.get("protocol_type", "").lower()
+            protocol_type = device_network.get("protocol", "").lower()
             # 确保协议类型字段存在
             if len(protocol_type) > 0:
-                # 协议库存在则创建对应映射记录
-                preconfigured_device_list = device_network.get("preconfigured_devices", [])
-                for device_info in preconfigured_device_list:
-                    device_protocol_type = device_info.get("protocol_type", protocol_type)
-                    device_id = "%s/%s/%s" % (network_name,
-                                              device_info.get("device_addr", ""),
-                                              device_info.get("device_port"))
-                    if device_protocol_type in self.protocol_dict:
-                        self.mapper_dict[device_id] = device_protocol_type
-                    else:
-                        # 有协议库不存在，系统退出
-                        logger.error("protocol(%s) lib don't exit." % device_protocol_type)
-                        sys.exit(1)
+                channels = device_network.get("channels", [])
+                for channel in channels:
+                    # 协议库存在则创建对应映射记录
+                    preconfigured_device_list = channel.get("preconfigured_devices", [])
+                    for device_info in preconfigured_device_list:
+                        device_protocol_type = device_info.get("protocol_type", protocol_type)
+                        device_id = "%s/%s/%s" % (network_name,
+                                                  device_info.get("device_addr", ""),
+                                                  device_info.get("device_port"))
+                        if device_protocol_type in self.protocol_dict:
+                            self.mapper_dict[device_id] = device_protocol_type
+                        else:
+                            # 有协议库不存在，系统退出
+                            logger.error("protocol(%s) lib don't exit." % device_protocol_type)
+                            return False
             else:
                 logger.error("params error. protocol_type is null.")
+                return False
+        return True
 
     def add_device(self, protocol_type, device_id):
         if protocol_type in self.protocol_dict:

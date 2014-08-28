@@ -26,12 +26,12 @@ class MQTTManager(object):
         self.device_dict = dict()
         self.plugin_manager = plugin_manager
 
-    def load(self, mqtt_params):
+    def load(self, plugin_params):
         # 根据device_network来创建Mqtt客户端
-        for device_network in mqtt_params:
+        for device_network in plugin_params:
             network_name = device_network.get("network_name", "")
             self.mqtt_dict[network_name] = MqttClient(network_name, device_network, self.plugin_manager)
-            self.mqtt_dict[network_name].run()
+            self.mqtt_dict[network_name].start()
             channels = device_network.get("channels", [])
             for channel in channels:
                 preconfigured_devices = channel.get("preconfigured_devices", [])
@@ -43,7 +43,7 @@ class MQTTManager(object):
 
         # 如果MQTT服务器没启动，则系统退出。
         for network_name in self.mqtt_dict:
-            if not self.mqtt_dict[network_name].isALive():
+            if not self.mqtt_dict[network_name].isAlive():
                 logger.fatal("network(%s) is not run. please check。" % network_name)
                 sys.exit(1)
 

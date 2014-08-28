@@ -16,6 +16,10 @@ from channel_manager import *
 from mqtt_manager import *
 from protocol_manager import *
 
+from libs import const
+
+const.devices_file_name = "devices.txt"
+
 
 class PluginManager(object):
     def __init__(self):
@@ -32,11 +36,20 @@ class PluginManager(object):
         """
         # 启动顺序，协议管理对象、Mqtt管理对象、通道管理对象
         self.protocol_manager = ProtocolManger(self)
-        self.protocol_manager.load(params)
+        result = self.protocol_manager.load(params)
+        if result is False:
+            logger.error("Load protocol manager fail.")
+            sys.exit(1)
         self.mqtt_manager = MQTTManager(self)
         self.mqtt_manager.load(params)
+        if result is False:
+            logger.error("Load mqtt manager fail.")
+            sys.exit(1)
         self.channel_manager = ChannelManager(self)
         self.channel_manager.load(params)
+        if result is False:
+            logger.error("Load channel manager fail.")
+            sys.exit(1)
         # 增加设备信息
         pass
 
@@ -52,6 +65,11 @@ class PluginManager(object):
         self.mqtt_manager.add_device(device_id, device_info)
         # 将设备信息插入到通道管理对象
         self.channel_manager.add_device(channel_name, device_id)
+        # 写设备信息文件
+        devices_file_name = const.devices_file_name
+        devices_file = open(devices_file_name, "w+")
+        devices_file.write(json.dumps(self.devices_dict))
+        devices_file.close()
 
     def send_cmd(self, device_id, device_cmd):
         return self.channel_manager.send_cmd(device_id, device_cmd)

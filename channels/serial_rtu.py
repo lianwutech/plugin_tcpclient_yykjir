@@ -8,9 +8,9 @@
 
 import logging
 
+import serial
 from pymodbus.client.sync import ModbusSerialClient
 
-import serial
 from libs.modbus_define import *
 from libs.base_channel import BaseChannel
 
@@ -19,15 +19,15 @@ logger = logging.getLogger('yykj_serial')
 
 
 class SerialRtuChannel(BaseChannel):
-    def __init__(self, network, name, protocol, params, manager):
-        BaseChannel.__init__(network, name, protocol, params, manager)
-        self.port = params.get("port", "")
-        self.stopbits = params.get("stopbits", serial.STOPBITS_ON)
-        self.parity = params.get("parity", serial.PARITY_NONE)
-        self.bytesize = params.get("bytesize", serial.EIGHTBITS)
-        self.baudrate = params.get("baudrate", 9600)
-        self.timeout = params.get("timeout", 1)
+    def __init__(self, network, channel_name, channel_protocol, channel_params, channel_manager):
+        self.port = channel_params.get("port", "")
+        self.stopbits = channel_params.get("stopbits", serial.STOPBITS_ONE)
+        self.parity = channel_params.get("parity", serial.PARITY_NONE)
+        self.bytesize = channel_params.get("bytesize", serial.EIGHTBITS)
+        self.baudrate = channel_params.get("baudrate", 9600)
+        self.timeout = channel_params.get("timeout", 1)
         self.modbus_client = None
+        BaseChannel.__init__(self, network, channel_name, channel_protocol, channel_params, channel_manager)
 
     def run(self):
         self.modbus_client = ModbusSerialClient(method='rtu',
@@ -137,4 +137,4 @@ class SerialRtuChannel(BaseChannel):
             device_data = None
 
         data_msg = {"device_info": device_info, "device_data": device_data}
-        self.manager.process_data(self, self.network, self.name, self.protocol, data_msg)
+        self.channel_manager.process_data(self, self.network_name, self.channel_name, self.channel_protocol, data_msg)

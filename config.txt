@@ -1,0 +1,29 @@
+[
+    {
+        "network_name": "yykj1",
+        "protocol": "modbus",
+        "params": {
+            "server": "192.168.199.249",
+            "port": 1883,
+            "client_id": "yykj_client_1",
+            "gateway_topic": "gateway"
+        },
+        "channels": [
+            {
+                "name": "serial_rtu_1",
+                "type": "serial_rtu",
+                "params": {
+                    "port": "/dev/tty.SLAB_USBtoUART",
+                    "baund": 9600
+                },
+                "preconfigured_devices": [
+                    {
+                        "device_type": "easy_run.mt",
+                        "device_addr": "1",
+                        "device_port": "0"
+                    }
+                ]
+            }
+        ]
+    }
+]

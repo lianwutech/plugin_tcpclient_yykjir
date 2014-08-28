@@ -14,9 +14,9 @@ logger = logging.getLogger('yykj_serial')
 
 
 class TCPServerChannel(BaseChannel):
-    def __init__(self, network, name, protocol, params, manager):
+    def __init__(self, network, channel_name, channel_protocol, channel_params, manager):
         self.status = None
-        BaseChannel.__init__(network, name, protocol, params, manager)
+        BaseChannel.__init__(network, channel_name, channel_protocol, channel_params, manager)
 
     def run(self):
         pass

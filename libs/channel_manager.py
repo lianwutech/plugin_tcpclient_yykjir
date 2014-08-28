@@ -11,7 +11,7 @@ import os
 import sys
 
 from libs.base_channel import *
-from libs.utils import cur_file_dir, words_capitalize
+from libs.utils import cur_file_dir, get_subclass
 
 
 class ChannelManager(object):
@@ -22,7 +22,7 @@ class ChannelManager(object):
         self.device_dict = dict()
         self.plugin_manager = plugin_manager
 
-    def load(self, channel_params):
+    def load(self, plugin_params):
         # 扫描通道库
         # 通过扫描目录来获取支持的协议库
         cur_dir = cur_file_dir()
@@ -38,11 +38,11 @@ class ChannelManager(object):
                     # 加载库
                     module_name = "channels." + channel_name
                     module = __import__(module_name)
-                    class_name = words_capitalize(channel_name) + "Channel"
-                    class_object = getattr(module, class_name)
+                    channel_module = getattr(module, channel_name)
+                    class_object = get_subclass(channel_module, BaseChannel)
                     self.channel_class_dict[channel_name] = class_object
         # 加载参数
-        for device_network in channel_params:
+        for device_network in plugin_params:
             network_name = device_network.get("network_name", "")
             protocol = device_network.get("protocol", "")
             channels = device_network.get("channels", [])
@@ -61,12 +61,12 @@ class ChannelManager(object):
                                                                            channel_params,
                                                                            self)
                 else:
-                    logger.error("channel type(%s) is not exist. Please check!")
+                    logger.error("channel type(%s) is not exist. Please check!" % channel_name)
                     sys.exit(1)
 
                 # 通道启动
                 try:
-                    self.channel_dict[channel_name].run()
+                    self.channel_dict[channel_name].start()
                 except Exception, e:
                     logger.error("channel(%s) run fail. error info: %r" % (channel_name, e))
 
@@ -95,7 +95,7 @@ class ChannelManager(object):
             logger.info("device(%s) is exist." % device_id)
             return False
 
-    def process_data(self, network, channel, protocol, data_msg):
+    def process_data(self, network_name, channel_name, channel_protocol, data_msg):
         """
         所有通道共用的数据处理通道
         :param channel:
@@ -103,13 +103,13 @@ class ChannelManager(object):
         :param msg:
         :return:
         """
-        device_info, device_data = self.plugin_manager.process_data_by_protocol(protocol, data_msg)
+        device_info, device_data = self.plugin_manager.process_data_by_protocol(channel_protocol, data_msg)
         # 判断设备是否存在，没有则新增设备
-        device_id = "%s/%s/%s" % (network,
+        device_id = "%s/%s/%s" % (network_name,
                                   device_info.get("device_addr", ""),
                                   device_info.get("device_port"))
         if device_id not in self.mapper_dict:
-            self.plugin_manager.add_device(network, channel, protocol, device_info)
+            self.plugin_manager.add_device(network_name, channel_name, channel_protocol, device_info)
         # 发送数据
         self.plugin_manager.send_data(device_id, device_data)
 

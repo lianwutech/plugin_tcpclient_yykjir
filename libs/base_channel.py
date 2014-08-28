@@ -19,12 +19,12 @@ class BaseChannel(threading.Thread):
     针对每种通信模式实现各自的内容
     """
 
-    def __init__(self, network, name, protocol, params, manager):
-        self.name = name
-        self.protocol = protocol
-        self.params = params
-        self.network = network
-        self.manager = manager
+    def __init__(self, network_name, channel_name, channel_protocol, channel_params, channel_manager):
+        self.channel_name = channel_name
+        self.channel_protocol = channel_protocol
+        self.channel_params = channel_params
+        self.network_name = network_name
+        self.channel_manager = channel_manager
         threading.Thread.__init__(self)
 
     def run(self):
