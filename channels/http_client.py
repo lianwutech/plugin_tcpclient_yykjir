@@ -14,9 +14,9 @@ logger = logging.getLogger('yykj_serial')
 
 
 class HttpClientChannel(BaseChannel):
-    def __init__(self, network, channel_name, channel_protocol, channel_params, manager):
+    def __init__(self, network, channel_name, channel_protocol, channel_params, manager, channel_type):
         self.status = None
-        BaseChannel.__init__(network, channel_name, channel_protocol, channel_params, manager)
+        BaseChannel.__init__(network, channel_name, channel_protocol, channel_params, manager, channel_type)
 
     def run(self):
         logger.debug("HttpClientChannel has runned.")

@@ -46,3 +46,6 @@ plugin_yykj_serial
 具体运行时的设备情况存储在devices.txt中
 protocol为协议类型名，同协议库文件名称，比如x*_y*.py对应的协议名为x*_y*
 channel->type为通道类型，同通道库文件名称，比如x*_y*.py对应的通道类型为x*_y*
+
+mqtt命令样例：
+ {"command": {"count": 2, "addr": 0, "func_code": 3}}

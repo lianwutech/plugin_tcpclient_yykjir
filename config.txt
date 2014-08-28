@@ -3,7 +3,7 @@
         "network_name": "yykj1",
         "protocol": "modbus",
         "params": {
-            "server": "192.168.199.249",
+            "server": "192.168.199.124",
             "port": 1883,
             "client_id": "yykj_client_1",
             "gateway_topic": "gateway"

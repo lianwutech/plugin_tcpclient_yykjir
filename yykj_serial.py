@@ -15,8 +15,9 @@ import json
 import logging
 
 from libs import const
-from libs.utils import cur_file_dir
+from libs.utils import cur_file_dir, convert
 from libs.plugin_manager import PluginManager
+
 
 
 # 设置系统为utf-8  勿删除
@@ -49,7 +50,7 @@ def load_config(config_file_name):
         content = config_file.read()
         config_file.close()
         try:
-            config_info = json.loads(content)
+            config_info = convert(json.loads(content.encode("utf-8")))
             logger.debug("load config info success，%s" % content)
             return config_info
         except Exception, e:
@@ -77,4 +78,4 @@ if __name__ == "__main__":
         logger.debug("channel_status:%r" % channel_status)
         mqtt_client_status = plugin_manager.check_mqtt_client_status()
         logger.debug("mqtt_client_status:%r" % mqtt_client_status)
-        time.sleep(10)
+        time.sleep(2)

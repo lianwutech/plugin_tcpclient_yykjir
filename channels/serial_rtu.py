@@ -19,15 +19,16 @@ logger = logging.getLogger('yykj_serial')
 
 
 class SerialRtuChannel(BaseChannel):
-    def __init__(self, network, channel_name, channel_protocol, channel_params, channel_manager):
+    def __init__(self, network, channel_name, channel_protocol, channel_params, channel_manager, channel_type):
         self.port = channel_params.get("port", "")
         self.stopbits = channel_params.get("stopbits", serial.STOPBITS_ONE)
         self.parity = channel_params.get("parity", serial.PARITY_NONE)
         self.bytesize = channel_params.get("bytesize", serial.EIGHTBITS)
         self.baudrate = channel_params.get("baudrate", 9600)
-        self.timeout = channel_params.get("timeout", 1)
+        self.timeout = channel_params.get("timeout", 2)
         self.modbus_client = None
-        BaseChannel.__init__(self, network, channel_name, channel_protocol, channel_params, channel_manager)
+        BaseChannel.__init__(self, network, channel_name, channel_protocol, channel_params, channel_manager,
+                             channel_type)
 
     def run(self):
         self.modbus_client = ModbusSerialClient(method='rtu',
@@ -42,11 +43,16 @@ class SerialRtuChannel(BaseChannel):
             logger.debug("连接串口成功.")
         except Exception, e:
             logger.error("连接串口失败，错误信息：%r." % e)
+            self.modbus_client = None
 
     def isAlive(self):
         return True
 
     def send_cmd(self, device_info, device_cmd):
+        if self.modbus_client is None:
+            logger.error("modbus client is not connect.")
+            return False
+
         if device_cmd["func_code"] == const.fc_read_coils or device_cmd["func_code"] == const.fc_read_discrete_inputs:
             req_result = self.modbus_client.read_coils(device_cmd["addr"],
                                                        device_cmd["count"],
@@ -137,4 +143,4 @@ class SerialRtuChannel(BaseChannel):
             device_data = None
 
         data_msg = {"device_info": device_info, "device_data": device_data}
-        self.channel_manager.process_data(self, self.network_name, self.channel_name, self.channel_protocol, data_msg)
+        return self.channel_manager.process_data(self.network_name, self.channel_name, self.channel_protocol, data_msg)

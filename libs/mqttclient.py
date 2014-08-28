@@ -13,18 +13,20 @@ import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
 
 
-logger = logging.getLogger('yykj_tcp')
+logger = logging.getLogger('yykj_serial')
 
 
 class MqttClient(threading.Thread):
     def __init__(self, network_name, network_params, plugin_manager):
         self.network_name = network_name
         self.plugin_manager = plugin_manager
+        self.network_params = network_params
         self.protocol = network_params.get("protocol", "")
-        params = network_params.get("params", {})
-        self.server_ip = params.get("server", "127.0.0.1")
-        self.server_port = params.get("port", 1883)
-        self.gateway_topic = params.get("gateway_topic", "gateway")
+        mqtt_params = network_params.get("params", {})
+        self.server_ip = mqtt_params.get("server", "127.0.0.1")
+        self.server_port = mqtt_params.get("port", 1883)
+        self.gateway_topic = mqtt_params.get("gateway_topic", "gateway")
+        self.client_id = mqtt_params.get("client_id", network_name)
         # 加载params
         self.device_dict = dict()
         channels = network_params.get("channels", [])
@@ -56,7 +58,10 @@ class MqttClient(threading.Thread):
             logger.info("Connected with result code " + str(rc))
             # Subscribing in on_connect() means that if we lose the connection and
             # reconnect then subscriptions will be renewed.
-            mqtt_client.subscribe("%s/#" % self.network_name)
+            try:
+                mqtt_client.subscribe("%s/#" % self.network_name)
+            except Exception, e:
+                logger.error("subscribe fail.")
 
         # The callback for when a PUBLISH message is received from the server.
         def on_message(client, userdata, msg):
@@ -75,7 +80,7 @@ class MqttClient(threading.Thread):
                 else:
                     logger.error("plugin_manager.process_cmd fail。")
 
-        mqtt_client = mqtt.Client(client_id=self.network_name)
+        mqtt_client = mqtt.Client(client_id=self.client_id)
         mqtt_client.on_connect = on_connect
         mqtt_client.on_message = on_message
 
@@ -84,6 +89,10 @@ class MqttClient(threading.Thread):
             mqtt_client.loop_forever()
         except Exception, e:
             logger.error("MQTT链接失败，错误内容:%r" % e)
+            # 关闭并删除mqtt连接，为重新起新线程做准备
+            mqtt_client.disconnect()
+            mqtt_client = None
+
 
     def send_data(self, device_id, device_data):
         if device_id in self.device_dict:

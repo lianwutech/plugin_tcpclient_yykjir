@@ -25,7 +25,7 @@ def hex2int(hex_str):
 
 # 获取脚本文件的当前路径
 def cur_file_dir():
-    #获取脚本路径
+    # 获取脚本路径
     path = sys.path[0]
     #判断为脚本文件还是py2exe编译后的文件，如果是脚本文件，则返回的是脚本的目录，
     #如果是py2exe编译后的文件，则返回的是编译后的文件路径
@@ -42,7 +42,7 @@ def get_ip_addr(ifname="eth0"):
     system = platform.system()
     if system == "Windows" or system == "Darwin":
         import socket
-        #获取本机电脑名
+        # 获取本机电脑名
         myname = socket.getfqdn(socket.gethostname())
         #获取本机ip
         myaddr = socket.gethostbyname(myname)
@@ -90,3 +90,19 @@ def get_subclass(module, base_class):
         except TypeError:  # If 'obj' is not a class
             pass
     return None
+
+
+def convert(input):
+    """
+    将字典或列表中unicode转成utf-8
+    :param input:
+    :return:
+    """
+    if isinstance(input, dict):
+        return {convert(key): convert(value) for key, value in input.iteritems()}
+    elif isinstance(input, list):
+        return [convert(element) for element in input]
+    elif isinstance(input, unicode):
+        return input.encode('utf-8')
+    else:
+        return input

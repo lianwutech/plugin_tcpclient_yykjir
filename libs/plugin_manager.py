@@ -18,6 +18,8 @@ from protocol_manager import *
 
 from libs import const
 
+
+logger = logging.getLogger('yykj_serial')
 const.devices_file_name = "devices.txt"
 
 
@@ -95,7 +97,7 @@ class PluginManager(object):
         """
         return self.protocol_manager.process_cmd(device_id, device_cmd)
 
-    def process_data_by_protocol(self, channel, protocol, data_msg):
+    def process_data_by_protocol(self, channel_name, protocol, data_msg):
         """
         返回device_data
         :param channel:

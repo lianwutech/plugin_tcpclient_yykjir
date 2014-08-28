@@ -11,12 +11,7 @@ from mqttclient import *
 
 
 # 日志对象
-logger = logging.getLogger('yykj_tcp')
-hdlr = logging.FileHandler('./yykj_tcp.log')
-formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-hdlr.setFormatter(formatter)
-logger.addHandler(hdlr)
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger('yykj_serial')
 
 
 class MQTTManager(object):
@@ -62,16 +57,19 @@ class MQTTManager(object):
 
     def send_data_by_protocol(self, protocol, msg):
         device_info, device_data = self.plugin_manager.process_data_by_type(protocol, msg)
-
         pass
 
     def check_status(self):
         status_dict = dict()
         for network_name in self.mqtt_dict:
-            if self.mqtt_dict[network_name].isALive():
+            if self.mqtt_dict[network_name].isAlive():
                 status_dict[network_name] = "run"
             else:
                 status_dict[network_name] = "stop"
                 logger.error("network(%s) is not alive, restart." % network_name)
-                self.mqtt_dict[network_name].run()
+                old_client = self.mqtt_dict[network_name]
+                new_client = MqttClient(old_client.network_name, old_client.network_params, old_client.plugin_manager)
+                del old_client
+                self.mqtt_dict[network_name] = new_client
+                self.mqtt_dict[network_name].start()
         return status_dict

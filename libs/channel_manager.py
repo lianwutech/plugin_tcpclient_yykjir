@@ -59,7 +59,8 @@ class ChannelManager(object):
                                                                            channel_name,
                                                                            protocol,
                                                                            channel_params,
-                                                                           self)
+                                                                           self,
+                                                                           channel_type)
                 else:
                     logger.error("channel type(%s) is not exist. Please check!" % channel_name)
                     sys.exit(1)
@@ -75,7 +76,11 @@ class ChannelManager(object):
                     device_id = "%s/%s/%s" % (network_name,
                                               device_info.get("device_addr", ""),
                                               device_info.get("device_port"))
+                    if "protocol" not in device_info:
+                        device_info["protocol"] = protocol
+                    device_info["channel"] = channel_name
                     self.mapper_dict[device_id] = channel_name
+                    self.device_dict[device_id] = device_info
 
         # 检查通道启动情况，如果有通道退出，则系统退出。
         for channel_name in self.channel_dict:
@@ -103,7 +108,8 @@ class ChannelManager(object):
         :param msg:
         :return:
         """
-        device_info, device_data = self.plugin_manager.process_data_by_protocol(channel_protocol, data_msg)
+        device_info, device_data = self.plugin_manager.process_data_by_protocol(channel_name, channel_protocol,
+                                                                                data_msg)
         # 判断设备是否存在，没有则新增设备
         device_id = "%s/%s/%s" % (network_name,
                                   device_info.get("device_addr", ""),
@@ -111,7 +117,7 @@ class ChannelManager(object):
         if device_id not in self.mapper_dict:
             self.plugin_manager.add_device(network_name, channel_name, channel_protocol, device_info)
         # 发送数据
-        self.plugin_manager.send_data(device_id, device_data)
+        return self.plugin_manager.send_data(device_id, device_data)
 
     def send_cmd(self, device_id, device_cmd):
         if device_id in self.mapper_dict:
@@ -138,10 +144,23 @@ class ChannelManager(object):
         """
         status_dict = dict()
         for channel_name in self.channel_dict:
-            if self.channel_dict[channel_name].isALive():
+            if self.channel_dict[channel_name].isAlive():
                 status_dict[channel_name] = "run"
             else:
                 status_dict[channel_name] = "stop"
                 logger.error("channel(%s) is not alive, restart." % channel_name)
-                self.channel_dict[channel_name].run()
+                old_channel = self.channel_dict[channel_name]
+                if old_channel.channel_type in self.channel_class_dict:
+                    channel_class_object = self.channel_class_dict[old_channel.channel_type]
+                    new_channel = channel_class_object(old_channel.network_name,
+                                                       old_channel.channel_name,
+                                                       old_channel.protocol,
+                                                       old_channel.channel_params,
+                                                       old_channel.channel_manager,
+                                                       old_channel.channel_type)
+                    self.channel_dict[channel_name] = new_channel
+                    self.channel_dict[channel_name].start()
+                else:
+                    logger.error("不可能发生的错误。")
+
         return status_dict

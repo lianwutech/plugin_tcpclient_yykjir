@@ -18,11 +18,11 @@ logger = logging.getLogger('yykj_serial')
 
 
 class TcpRtuChannel(BaseChannel):
-    def __init__(self, network, channel_name, channel_protocol, channel_params, manager):
-        BaseChannel.__init__(network, channel_name, channel_protocol, channel_params, manager)
-        self.server = params.get("server", "")
-        self.port = params.get("port", "")
+    def __init__(self, network, channel_name, channel_protocol, channel_params, manager, channel_type):
+        self.server = channel_params.get("server", "")
+        self.port = channel_params.get("port", "")
         self.modbus_client = None
+        BaseChannel.__init__(network, channel_name, channel_protocol, channel_params, manager, channel_type)
 
     def run(self):
         self.modbus_client = ModbusTcpClient(host=self.server, port=self.port)
