@@ -142,5 +142,9 @@ class SerialRtuChannel(BaseChannel):
             logger.error("不支持的modbus指令：%d" % device_cmd["func_code"])
             device_data = None
 
-        data_msg = {"device_info": device_info, "device_data": device_data}
-        return self.channel_manager.process_data(self.network_name, self.channel_name, self.channel_protocol, data_msg)
+        data_msg = device_data
+        return self.channel_manager.process_data(self.network_name,
+                                                 self.channel_name,
+                                                 self.channel_protocol,
+                                                 device_info["device_id"],
+                                                 data_msg)

@@ -14,23 +14,19 @@ logger = logging.getLogger('yykj_serial')
 
 
 class ModbusProtocol(BaseProtocol):
-    def process_data(self, data_msg):
+    def process_data(self, device_info, data_msg):
         """
         返回device_data
         :param data_msg:
         :return:
         """
-        if "device_info" in data_msg:
-            device_info = data_msg["device_info"]
-        else:
-            device_info = None
+        result = True
+        if device_info is None:
+            result = result and False
 
-        if "device_data" in data_msg:
-            device_data = data_msg["device_data"]
-        else:
-            device_data = None
+        device_data = data_msg
 
-        return device_info, device_data
+        return result, device_info, device_data
 
     def process_cmd(self, device_cmd):
         """

@@ -19,7 +19,7 @@ class ChannelManager(object):
         self.mapper_dict = dict()
         self.channel_class_dict = dict()
         self.channel_dict = dict()
-        self.device_dict = dict()
+        self.channel_device_dict = dict()
         self.plugin_manager = plugin_manager
 
     def load(self, plugin_params):
@@ -44,7 +44,7 @@ class ChannelManager(object):
         # 加载参数
         for device_network in plugin_params:
             network_name = device_network.get("network_name", "")
-            protocol = device_network.get("protocol", "")
+            protocol = device_network.get("protocol", "").lower()
             channels = device_network.get("channels", [])
             for channel in channels:
                 channel_name = channel.get("name", "")
@@ -72,15 +72,17 @@ class ChannelManager(object):
                     logger.error("channel(%s) run fail. error info: %r" % (channel_name, e))
 
                 # 通道与设备的映射管理建立
+                self.channel_device_dict[channel_name] = dict()
                 for device_info in preconfigured_devices:
                     device_id = "%s/%s/%s" % (network_name,
                                               device_info.get("device_addr", ""),
                                               device_info.get("device_port"))
+                    device_info["device_id"] = device_id
                     if "protocol" not in device_info:
                         device_info["protocol"] = protocol
                     device_info["channel"] = channel_name
                     self.mapper_dict[device_id] = channel_name
-                    self.device_dict[device_id] = device_info
+                    self.channel_device_dict[channel_name][device_id] = device_info
 
         # 检查通道启动情况，如果有通道退出，则系统退出。
         for channel_name in self.channel_dict:
@@ -88,9 +90,10 @@ class ChannelManager(object):
                 logger.fatal("channel(%s) is not run. please check。" % channel_name)
                 sys.exit(1)
 
-    def add_device(self, channel_name, device_id):
+    def add_device(self, channel_name, device_id, device_info):
         if device_id in self.mapper_dict:
             if channel_name in self.channel_dict:
+                self.channel_device_dict[channel_name][device_id] = device_info
                 self.mapper_dict[device_id] = channel_name
                 return True
             else:
@@ -100,7 +103,7 @@ class ChannelManager(object):
             logger.info("device(%s) is exist." % device_id)
             return False
 
-    def process_data(self, network_name, channel_name, channel_protocol, data_msg):
+    def process_data(self, network_name, channel_name, channel_protocol, device_id, data_msg):
         """
         所有通道共用的数据处理通道
         :param channel:
@@ -108,21 +111,40 @@ class ChannelManager(object):
         :param msg:
         :return:
         """
-        device_info, device_data = self.plugin_manager.process_data_by_protocol(channel_name, channel_protocol,
-                                                                                data_msg)
-        # 判断设备是否存在，没有则新增设备
-        device_id = "%s/%s/%s" % (network_name,
-                                  device_info.get("device_addr", ""),
-                                  device_info.get("device_port"))
-        if device_id not in self.mapper_dict:
-            self.plugin_manager.add_device(network_name, channel_name, channel_protocol, device_info)
+        if device_id is None or device_id not in self.channel_device_dict["channel_name"]:
+            result, device_info, device_data = self.plugin_manager.process_data_by_protocol(channel_protocol, data_msg)
+            if result:
+                # 协议处理成功
+                if device_info is None:
+                    if len(self.channel_device_dict["channel_name"]) == 1:
+                        device_id = device_info["device_id"]
+                    else:
+                        logger.error("device not decide.")
+                        return False
+                else:
+                    device_id = "%s/%s/%s" % (network_name,
+                                              device_info.get("device_addr", ""),
+                                              device_info.get("device_port"))
+                    device_info["device_id"] = device_id
+
+                    # 判断设备是否存在，没有则新增设备
+                    if device_id not in self.channel_device_dict[channel_name]:
+                        self.plugin_manager.add_device(network_name, channel_name, channel_protocol, device_id,
+                                                       device_info)
+            else:
+                # 协议处理失败
+                logger.error("protocol process fails. protocol:%s, data_msg:%r" % (channel_protocol, data_msg))
+                return False
+        else:
+            device_data = self.plugin_manager.process_data(device_id, data_msg)
+
         # 发送数据
         return self.plugin_manager.send_data(device_id, device_data)
 
     def send_cmd(self, device_id, device_cmd):
         if device_id in self.mapper_dict:
             channel_name = self.mapper_dict[device_id]
-            device_info = self.device_dict[device_id]
+            device_info = self.channel_device_dict[channel_name][device_id]
             if channel_name in self.channel_dict:
                 channel = self.channel_dict.get(channel_name, None)
                 if not channel.isAlive():
@@ -154,7 +176,7 @@ class ChannelManager(object):
                     channel_class_object = self.channel_class_dict[old_channel.channel_type]
                     new_channel = channel_class_object(old_channel.network_name,
                                                        old_channel.channel_name,
-                                                       old_channel.protocol,
+                                                       old_channel.channel_protocol,
                                                        old_channel.channel_params,
                                                        old_channel.channel_manager,
                                                        old_channel.channel_type)

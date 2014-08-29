@@ -23,6 +23,21 @@
                         "device_port": "0"
                     }
                 ]
+            },
+            {
+                "name": "tcp_client_1",
+                "type": "tcp_client",
+                "params": {
+                    "host": "192.168.199.233",
+                    "port": 26
+                },
+                "preconfigured_devices": [
+                    {
+                        "device_type": "easy_run.infrared",
+                        "device_addr": "usr233",
+                        "device_port": "port1"
+                    }
+                ]
             }
         ]
     }

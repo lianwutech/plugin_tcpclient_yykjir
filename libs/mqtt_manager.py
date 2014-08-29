@@ -18,7 +18,7 @@ class MQTTManager(object):
     def __init__(self, plugin_manager):
         self.mapper_dict = dict()
         self.mqtt_dict = dict()
-        self.device_dict = dict()
+        # self.device_dict = dict()
         self.plugin_manager = plugin_manager
 
     def load(self, plugin_params):
@@ -58,6 +58,10 @@ class MQTTManager(object):
     def send_data_by_protocol(self, protocol, msg):
         device_info, device_data = self.plugin_manager.process_data_by_type(protocol, msg)
         pass
+
+    def add_device(self, network_name, device_id, device_info):
+        if network_name in self.mqtt_dict:
+            return self.mqtt_dict[network_name].add_device(device_id, device_info)
 
     def check_status(self):
         status_dict = dict()

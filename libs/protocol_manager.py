@@ -21,6 +21,7 @@ class ProtocolManger(object):
         self.mapper_dict = dict()
         self.protocol_dict = dict()
         self.protocol_class_dict = dict()
+        self.device_dict = dict()
         self.plugin_manager = plugin_manager
 
     def load(self, plugin_params):
@@ -60,20 +61,23 @@ class ProtocolManger(object):
         # 根据配置生成具体对象
         for device_network in plugin_params:
             network_name = device_network.get("network_name", "")
-            protocol_type = device_network.get("protocol", "").lower()
+            protocol = device_network.get("protocol", "").lower()
             # 确保协议类型字段存在
-            if len(protocol_type) > 0:
+            if len(protocol) > 0:
                 channels = device_network.get("channels", [])
                 for channel in channels:
                     # 协议库存在则创建对应映射记录
                     preconfigured_device_list = channel.get("preconfigured_devices", [])
                     for device_info in preconfigured_device_list:
-                        device_protocol_type = device_info.get("protocol_type", protocol_type)
                         device_id = "%s/%s/%s" % (network_name,
                                                   device_info.get("device_addr", ""),
                                                   device_info.get("device_port"))
+                        device_info["device_id"] = device_id
+                        device_protocol_type = device_info.get("protocol", protocol)
+                        device_info["protocol"] = device_protocol_type
                         if device_protocol_type in self.protocol_dict:
                             self.mapper_dict[device_id] = device_protocol_type
+                            self.device_dict[device_id] = device_info
                         else:
                             # 有协议库不存在，系统退出
                             logger.error("protocol(%s) lib don't exit." % device_protocol_type)
@@ -83,47 +87,59 @@ class ProtocolManger(object):
                 return False
         return True
 
-    def add_device(self, protocol_type, device_id):
+    def add_device(self, protocol_type, device_id, device_info):
         if protocol_type in self.protocol_dict:
+            self.device_dict[device_id] = device_info
             self.mapper_dict[device_id] = protocol_type
+            return True
+        else:
+            logger.error("Protocol(%s) is not exist." % protocol_type)
+            return False
 
     def process_data(self, device_id, msg):
         """
         根据device_id进行数据处理，生成数据
         :param device_id:
         :param msg:
-        :return:
+        :return:设备数据
         """
         if device_id in self.mapper_dict:
             protocol_type = self.mapper_dict[device_id]
-            return self.protocol_dict[protocol_type].process_data(msg)
+            device_info = self.device_dict.get(device_id, None)
+            if protocol_type in self.protocol_dict:
+                device_info, device_data = self.protocol_dict[protocol_type].process_data(device_info, msg)
+                return device_data
+            else:
+                logger.error("fatal error，protocol(%s) is lost。" % protocol_type)
+                return None
         else:
             logger.info("device_id(%s) is not exist")
-            return None, None
+            return None
 
     def process_cmd(self, device_id, msg):
         """
         根据device_id进行命令处理，生成要发送的命令字
         :param device_id:
         :param msg:
-        :return:
+        :return: 设备消息
         """
         if device_id in self.mapper_dict:
             protocol_type = self.mapper_dict[device_id]
-            return self.protocol_dict[protocol_type].process_cmd(msg)
+            device_info = self.device_dict.get(device_id, None)
+            return self.protocol_dict[protocol_type].process_cmd(device_info, msg)
         else:
             logger.info("device_id(%s) is not exist" % device_id)
-            return False
+            return None
 
     def process_data_by_protocol(self, protocol, msg):
         """
         根据协议类型来进行消息处理，返回设备信息和数据。
         :param protocol_type:
         :param msg:
-        :return:
+        :return: 处理结果、设备信息、设备数据
         """
         if protocol in self.protocol_dict:
-            return self.protocol_dict[protocol].process_data(msg)
+            return self.protocol_dict[protocol].process_data(None, msg)
         else:
             logger.info("protocol_type(%s) is not exist" % protocol)
-            return None, None
+            return False, None, None

@@ -28,50 +28,47 @@ class PluginManager(object):
         self.channel_manager = None
         self.protocol_manager = None
         self.mqtt_manager = None
-        self.devices_dict = dict()
+        # 使用channel_manager的设备字典作为插件的字典
+        # self.devices_dict = dict()
+        self.plugin_params = None
 
-    def load(self, params):
+    def load(self, plugin_params):
         """
         加载参数
         :param params:
         :return:
         """
+        self.plugin_params = plugin_params
         # 启动顺序，协议管理对象、Mqtt管理对象、通道管理对象
         self.protocol_manager = ProtocolManger(self)
-        result = self.protocol_manager.load(params)
+        result = self.protocol_manager.load(plugin_params)
         if result is False:
             logger.error("Load protocol manager fail.")
             sys.exit(1)
         self.mqtt_manager = MQTTManager(self)
-        self.mqtt_manager.load(params)
+        self.mqtt_manager.load(plugin_params)
         if result is False:
             logger.error("Load mqtt manager fail.")
             sys.exit(1)
         self.channel_manager = ChannelManager(self)
-        self.channel_manager.load(params)
+        self.channel_manager.load(plugin_params)
         if result is False:
             logger.error("Load channel manager fail.")
             sys.exit(1)
-        # 增加设备信息
-        pass
 
-    def add_device(self, network_name, channel_name, protocol_name, device_info):
-        device_info["channel"] = channel_name
-        if "protocol" not in device_info:
-            device_info["protocol"] = protocol_name
-        device_id = "%s/%s/%s" % (network_name,
-                                  device_info.get("device_addr", ""),
-                                  device_info.get("device_port"))
-        self.devices_dict[device_id] = device_info
+    def add_device(self, network_name, channel_name, protocol_name, device_id, device_info):
+        # 插件管理类不保留设备信息，使用channal_manager的设备字典
         # 将设备信息插入到Mqtt管理对象
-        self.mqtt_manager.add_device(device_id, device_info)
+        self.mqtt_manager.add_device(network_name, device_id, device_info)
         # 将设备信息插入到通道管理对象
-        self.channel_manager.add_device(channel_name, device_id)
+        self.channel_manager.add_device(channel_name, device_id, device_info)
+        self.protocol_manager.add_device(protocol_name, device_id, device_info)
         # 写设备信息文件
         devices_file_name = const.devices_file_name
         devices_file = open(devices_file_name, "w+")
-        devices_file.write(json.dumps(self.devices_dict))
+        devices_file.write(json.dumps(self.channel_manager.device_dict))
         devices_file.close()
+        return True
 
     def send_cmd(self, device_id, device_cmd):
         return self.channel_manager.send_cmd(device_id, device_cmd)
@@ -84,7 +81,7 @@ class PluginManager(object):
         返回device_data
         :param device_id:
         :param data_msg:
-        :return:
+        :return:设备数据
         """
         return self.protocol_manager.process_data(device_id, data_msg)
 
@@ -93,17 +90,17 @@ class PluginManager(object):
         返回cmd_msg
         :param device_id:
         :param device_cmd:
-        :return:
+        :return:设备消息
         """
         return self.protocol_manager.process_cmd(device_id, device_cmd)
 
-    def process_data_by_protocol(self, channel_name, protocol, data_msg):
+    def process_data_by_protocol(self, protocol, data_msg):
         """
         返回device_data
         :param channel:
         :param protocol:
         :param data_msg:
-        :return:
+        :return:处理结果、设备信息、设备数据
         """
         # 获取设备信息
         #

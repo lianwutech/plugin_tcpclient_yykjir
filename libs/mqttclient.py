@@ -37,6 +37,7 @@ class MqttClient(threading.Thread):
                 device_id = "%s/%s/%s" % (self.network_name,
                                           device_info.get("device_addr", ""),
                                           device_info.get("device_port"))
+                device_info["device_id"] = device_id
                 if "protocol" not in device_info:
                     device_info["protocol"] = self.protocol
                 device_info["channel"] = channel_name
@@ -93,10 +94,12 @@ class MqttClient(threading.Thread):
             mqtt_client.disconnect()
             mqtt_client = None
 
-
     def send_data(self, device_id, device_data):
         if device_id in self.device_dict:
             device_info = self.device_dict[device_id]
+            if device_data is None:
+                # 空数据以空字符串的形式传递，网关将丢弃该消息
+                device_data = ""
             # 组包
             device_msg = {
                 "device_id": device_id,
