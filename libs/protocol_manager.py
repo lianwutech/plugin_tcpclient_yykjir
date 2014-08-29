@@ -107,7 +107,7 @@ class ProtocolManger(object):
             protocol_type = self.mapper_dict[device_id]
             device_info = self.device_dict.get(device_id, None)
             if protocol_type in self.protocol_dict:
-                device_info, device_data = self.protocol_dict[protocol_type].process_data(device_info, msg)
+                result, device_info, device_data = self.protocol_dict[protocol_type].process_data(device_info, msg)
                 return device_data
             else:
                 logger.error("fatal error，protocol(%s) is lost。" % protocol_type)

@@ -51,18 +51,23 @@ class SerialRtuChannel(BaseChannel):
     def send_cmd(self, device_info, device_cmd):
         if self.modbus_client is None:
             logger.error("modbus client is not connect.")
+            device_data = None
             return False
 
         if device_cmd["func_code"] == const.fc_read_coils or device_cmd["func_code"] == const.fc_read_discrete_inputs:
             req_result = self.modbus_client.read_coils(device_cmd["addr"],
                                                        device_cmd["count"],
                                                        unit=int(device_info["device_addr"]))
-            device_data = {
-                "func_code": device_cmd["func_code"],
-                "addr": device_cmd["addr"],
-                "count": device_cmd["count"],
-                "values": req_result.bits
-            }
+            if req_result is None:
+                logger.error("device_cmd(%r) retun None." % device_cmd)
+                device_data = None
+            else:
+                device_data = {
+                    "func_code": device_cmd["func_code"],
+                    "addr": device_cmd["addr"],
+                    "count": device_cmd["count"],
+                    "values": req_result.bits
+                }
 
         elif device_cmd["func_code"] == const.fc_write_coil:
             req_result = self.modbus_client.write_coil(device_cmd["addr"],
@@ -71,12 +76,16 @@ class SerialRtuChannel(BaseChannel):
             res_result = self.modbus_client.read_coils(device_cmd["addr"],
                                                        1,
                                                        unit=int(device_info["device_addr"]))
-            device_data = {
-                "func_code": device_cmd["func_code"],
-                "addr": device_cmd["addr"],
-                "count": 1,
-                "values": req_result.bits[0:1]
-            }
+            if res_result is None:
+                logger.error("device_cmd(%r) retun None." % device_cmd)
+                device_data = None
+            else:
+                device_data = {
+                    "func_code": device_cmd["func_code"],
+                    "addr": device_cmd["addr"],
+                    "count": 1,
+                    "values": res_result.bits[0:1]
+                }
         elif device_cmd["func_code"] == const.fc_write_coils:
             req_result = self.modbus_client.write_coils(device_cmd["addr"],
                                                         device_cmd["values"],
@@ -85,12 +94,16 @@ class SerialRtuChannel(BaseChannel):
             res_result = self.modbus_client.read_coils(device_cmd["addr"],
                                                        counter,
                                                        unit=int(device_info["device_addr"]))
-            device_data = {
-                "func_code": device_cmd["func_code"],
-                "addr": device_cmd["addr"],
-                "count": counter,
-                "values": res_result.bits
-            }
+            if res_result is None:
+                logger.error("device_cmd(%r) retun None." % device_cmd)
+                device_data = None
+            else:
+                device_data = {
+                    "func_code": device_cmd["func_code"],
+                    "addr": device_cmd["addr"],
+                    "count": counter,
+                    "values": res_result.bits
+                }
         elif device_cmd["func_code"] == const.fc_write_register:
             req_result = self.modbus_client.write_register(device_cmd["addr"],
                                                            device_cmd["value"],
@@ -98,12 +111,16 @@ class SerialRtuChannel(BaseChannel):
             res_result = self.modbus_client.read_holding_registers(device_cmd["addr"],
                                                                    1,
                                                                    unit=int(device_info["device_addr"]))
-            device_data = {
-                "func_code": device_cmd["func_code"],
-                "addr": device_cmd["addr"],
-                "count": 1,
-                "values": res_result.registers[0:1]
-            }
+            if res_result is None:
+                logger.error("device_cmd(%r) retun None." % device_cmd)
+                device_data = None
+            else:
+                device_data = {
+                    "func_code": device_cmd["func_code"],
+                    "addr": device_cmd["addr"],
+                    "count": 1,
+                    "values": res_result.registers[0:1]
+                }
         elif device_cmd["func_code"] == const.fc_write_registers:
             result = self.modbus_client.write_registers(device_cmd["addr"],
                                                         device_cmd["values"],
@@ -112,32 +129,44 @@ class SerialRtuChannel(BaseChannel):
             res_result = self.modbus_client.read_input_registers(device_cmd["addr"],
                                                                  counter,
                                                                  unit=int(device_info["device_addr"]))
-            device_data = {
-                "func_code": device_cmd["func_code"],
-                "addr": device_cmd["addr"],
-                "count": counter,
-                "values": res_result.registers
-            }
+            if res_result is None:
+                logger.error("device_cmd(%r) retun None." % device_cmd)
+                device_data = None
+            else:
+                device_data = {
+                    "func_code": device_cmd["func_code"],
+                    "addr": device_cmd["addr"],
+                    "count": counter,
+                    "values": res_result.registers
+                }
         elif device_cmd["func_code"] == const.fc_read_holding_registers:
             res_result = self.modbus_client.read_holding_registers(device_cmd["addr"],
                                                                    device_cmd["count"],
                                                                    unit=int(device_info["device_addr"]))
-            device_data = {
-                "func_code": device_cmd["func_code"],
-                "addr": device_cmd["addr"],
-                "count": device_cmd["count"],
-                "values": res_result.registers
-            }
+            if res_result is None:
+                logger.error("device_cmd(%r) retun None." % device_cmd)
+                device_data = None
+            else:
+                device_data = {
+                    "func_code": device_cmd["func_code"],
+                    "addr": device_cmd["addr"],
+                    "count": device_cmd["count"],
+                    "values": res_result.registers
+                }
         elif device_cmd["func_code"] == const.fc_read_input_registers:
             res_result = self.modbus_client.read_input_registers(device_cmd["addr"],
                                                                  device_cmd["count"],
                                                                  unit=int(device_info["device_addr"]))
-            device_data = {
-                "func_code": device_cmd["func_code"],
-                "addr": device_cmd["addr"],
-                "count": device_cmd["count"],
-                "values": res_result.registers
-            }
+            if res_result is None:
+                logger.error("device_cmd(%r) retun None." % device_cmd)
+                device_data = None
+            else:
+                device_data = {
+                    "func_code": device_cmd["func_code"],
+                    "addr": device_cmd["addr"],
+                    "count": device_cmd["count"],
+                    "values": res_result.registers
+                }
         else:
             logger.error("不支持的modbus指令：%d" % device_cmd["func_code"])
             device_data = None

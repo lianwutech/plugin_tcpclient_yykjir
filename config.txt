@@ -1,6 +1,6 @@
 [
     {
-        "network_name": "yykj1",
+        "network_name": "modbus_devices",
         "protocol": "modbus",
         "params": {
             "server": "192.168.199.124",
@@ -14,7 +14,8 @@
                 "type": "serial_rtu",
                 "params": {
                     "port": "/dev/tty.SLAB_USBtoUART",
-                    "baund": 9600
+                    "baund": 9600,
+                    "timeout": 3
                 },
                 "preconfigured_devices": [
                     {
@@ -23,7 +24,19 @@
                         "device_port": "0"
                     }
                 ]
-            },
+            }
+        ]
+    },
+    {
+        "network_name": "yykj_devices",
+        "protocol": "yykj",
+        "params": {
+            "server": "192.168.199.124",
+            "port": 1883,
+            "client_id": "yykj_client_1",
+            "gateway_topic": "gateway"
+        },
+        "channels": [
             {
                 "name": "tcp_client_1",
                 "type": "tcp_client",

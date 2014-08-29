@@ -124,3 +124,4 @@ class MqttClient(threading.Thread):
         else:
             logger.error("device(%s) is not exist in network(%s)." % (device_id, self.network_name))
             return False
+

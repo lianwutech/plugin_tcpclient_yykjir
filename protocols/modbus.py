@@ -28,7 +28,7 @@ class ModbusProtocol(BaseProtocol):
 
         return result, device_info, device_data
 
-    def process_cmd(self, device_cmd):
+    def process_cmd(self, device_info, device_cmd):
         """
         返回cmd_msg
         :param device_cmd:

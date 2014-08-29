@@ -111,13 +111,14 @@ class ChannelManager(object):
         :param msg:
         :return:
         """
-        if device_id is None or device_id not in self.channel_device_dict["channel_name"]:
+        if device_id is None or device_id not in self.channel_device_dict[channel_name]:
             result, device_info, device_data = self.plugin_manager.process_data_by_protocol(channel_protocol, data_msg)
             if result:
                 # 协议处理成功
                 if device_info is None:
-                    if len(self.channel_device_dict["channel_name"]) == 1:
-                        device_id = device_info["device_id"]
+                    if len(self.channel_device_dict[channel_name]) == 1:
+                        for key, value in self.channel_device_dict[channel_name].items():
+                            device_id = key
                     else:
                         logger.error("device not decide.")
                         return False
