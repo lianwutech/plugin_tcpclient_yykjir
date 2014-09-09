@@ -42,12 +42,16 @@ class MqttClient(threading.Thread):
                     device_info["protocol"] = self.protocol
                 device_info["channel"] = channel_name
                 self.device_dict[device_id] = device_info
+                # 上报设备信息
+                self.send_data(device_id, "")
         threading.Thread.__init__(self)
 
     def add_device(self, device_id, device_info):
         if device_id not in self.device_dict:
             logger.info("insert device(%s):%r" % (device_id, device_info))
             self.device_dict[device_id] = device_info
+            # 上报设备信息
+            self.send_data(device_id, "")
             return True
         else:
             logger.info("device(%s) is exist." % device_id)

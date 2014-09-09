@@ -5,7 +5,6 @@
         "params": {
             "server": "192.168.199.124",
             "port": 1883,
-            "client_id": "yykj_client_1",
             "gateway_topic": "gateway"
         },
         "channels": [
@@ -33,7 +32,6 @@
         "params": {
             "server": "192.168.199.124",
             "port": 1883,
-            "client_id": "yykj_client_1",
             "gateway_topic": "gateway"
         },
         "channels": [

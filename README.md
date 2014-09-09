@@ -48,6 +48,9 @@ protocol为协议类型名，同协议库文件名称，比如x*_y*.py对应的�
 channel->type为通道类型，同通道库文件名称，比如x*_y*.py对应的通道类型为x*_y*
 
 mqtt命令样例：
-yykj1/1/0
+modbus_devices/1/0
 {"command": {"count": 2, "addr": 0, "func_code": 3}}
+
+yykj_devices/usr233/port1
+{"command": "S01001"}
  
