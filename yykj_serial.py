@@ -14,20 +14,14 @@ import time
 import json
 import logging
 
-from libs import const
 from libs.utils import cur_file_dir, convert
 from libs.plugin_manager import PluginManager
 
 
 
-# 设置系统为utf-8  勿删除
-reload(sys)
-sys.setdefaultencoding('utf-8')
-
-
 # 全局变量
 # 配置文件名称
-const.config_file_name = "config.txt"
+config_file_name = "yykj_serial.cfg"
 
 # 切换工作目录
 # 程序运行路径
@@ -64,7 +58,7 @@ def load_config(config_file_name):
 if __name__ == "__main__":
 
     # 加载设备数据
-    plugin_params = load_config(const.config_file_name)
+    plugin_params = load_config(config_file_name)
     if plugin_params is not None:
         plugin_manager = PluginManager()
         plugin_manager.load(plugin_params)
@@ -78,4 +72,4 @@ if __name__ == "__main__":
         logger.debug("channel_status:%r" % channel_status)
         mqtt_client_status = plugin_manager.check_mqtt_client_status()
         logger.debug("mqtt_client_status:%r" % mqtt_client_status)
-        time.sleep(2)
+        time.sleep(0.5)

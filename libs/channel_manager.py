@@ -38,8 +38,8 @@ class ChannelManager(object):
                     # 加载库
                     module_name = "channels." + channel_name
                     module = __import__(module_name)
-                    channel_module = getattr(module, channel_name)
-                    class_object = get_subclass(channel_module, BaseChannel)
+                    channel_module_attrs = getattr(module, channel_name)
+                    class_object = get_subclass(channel_module_attrs, BaseChannel)
                     self.channel_class_dict[channel_name] = class_object
         # 加载参数
         for device_network in plugin_params:
