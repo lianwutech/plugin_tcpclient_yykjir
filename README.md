@@ -1,4 +1,4 @@
-plugin_yykj_serial
+plugin_tcpclient_yykjir
 ==================
 
 支持易运科技的硬件产品

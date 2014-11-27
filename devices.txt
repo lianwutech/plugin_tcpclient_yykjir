@@ -1,1 +1,1 @@
-{"mnet1/1/0": {"device_addr": "1", "device_port": "0", "device_type": "modbus", "device_id": "mnet1/1/0"}}
+{"usr1/192.168.199.233/26": {"device_addr": "192.168.199.233", "device_port": 26, "device_type": "yykjir", "device_id": "usr1/192.168.199.233/26"}}
