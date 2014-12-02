@@ -70,7 +70,7 @@ class YykjifProtocol(BaseProtocol):
                     "device_port": device_port,
                     "device_type": device_type,
                     "protocol": self.protocol_type,
-                    "data": {"command": self.device_cmd_msg["command"], "result":result_data}
+                    "data": {"command": self.device_cmd_msg["command"], "result": result_data}
                 }
                 device_data_msg_list.append(device_data_msg)
 
