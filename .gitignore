@@ -51,4 +51,5 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 logs/*
-*.cfg
+plugin.cfg
+devices.txt
